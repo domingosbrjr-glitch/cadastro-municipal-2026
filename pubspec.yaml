@@ -1,0 +1,27 @@
+name: cadastro_municipal_offline
+description: v0.4 - Cadastro Municipal Offline (autoral)
+publish_to: "none"
+version: 0.4.0+4
+
+environment:
+  sdk: ">=3.3.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  sqflite: ^2.3.3
+  path: ^1.9.0
+  http: ^1.2.2
+  uuid: ^4.5.1
+  shared_preferences: ^2.3.2
+  image_picker: ^1.1.2
+  flutter_image_compress: ^2.3.0
+  path_provider: ^2.1.5
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
