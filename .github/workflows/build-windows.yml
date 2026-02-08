@@ -1,6 +1,9 @@
-name: Build Windows EXE
-on:
-  workflow_dispatch:
+- name: Build Windows Release (verbose)
+  shell: pwsh
+  run: |
+    Set-Location "${{ steps.locate.outputs.proj }}"
+    flutter build windows --release -v
+
 
 jobs:
   build:
