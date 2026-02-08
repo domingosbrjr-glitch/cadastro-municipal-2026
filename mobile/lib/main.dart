@@ -35,13 +35,16 @@ class _AppState extends State<App> {
       return const MaterialApp(home: Scaffold(body: Center(child: CircularProgressIndicator())));
     }
     return MaterialApp(
-      title: 'Cadastro Municipal Offline',
-      theme: ThemeData(useMaterial3: true),
-      initialRoute: token.isEmpty ? "/login" : "/home",
-      routes: {
-        "/login": (_) => const LoginScreen(),
-        "/home": (_) => const HomeScreen(),
-      },
-    );
-  }
-}
+  title: 'Cadastro Municipal Offline',
+  theme: ThemeData(useMaterial3: true),
+
+  // ✅ Evita erro de rota no Windows
+  home: token.isEmpty ? const LoginScreen() : const HomeScreen(),
+
+  // ✅ Mantém navegação por nome funcionando
+  routes: {
+    "/": (_) => token.isEmpty ? const LoginScreen() : const HomeScreen(),
+    "/login": (_) => const LoginScreen(),
+    "/home": (_) => const HomeScreen(),
+  },
+);
