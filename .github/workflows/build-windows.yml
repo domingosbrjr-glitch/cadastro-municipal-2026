@@ -5,7 +5,6 @@ on:
 jobs:
   build:
     runs-on: windows-latest
-
     steps:
       - uses: actions/checkout@v4
 
@@ -15,20 +14,32 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Flutter version
-        run: flutter --version
+      - name: Debug - list root
+        shell: pwsh
+        run: |
+          Write-Host "Workspace: $env:GITHUB_WORKSPACE"
+          Get-ChildItem -Path $env:GITHUB_WORKSPACE | Format-Table -AutoSize
 
-      - name: Enable Windows Desktop
-        run: flutter config --enable-windows-desktop
-
-      -       - name: Locate Flutter project
+      - name: Locate Flutter project (mobile or search pubspec)
         id: locate
         shell: pwsh
         run: |
-          $pub = Get-ChildItem -Path $env:GITHUB_WORKSPACE -Recurse -Filter pubspec.yaml | Select-Object -First 1
-          if (-not $pub) { throw "pubspec.yaml not found in repository" }
-          "proj=$($pub.Directory.FullName)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
-          Write-Host "Flutter project at: $($pub.Directory.FullName)"
+          $mobile = Join-Path $env:GITHUB_WORKSPACE "mobile"
+          if (Test-Path $mobile) {
+            $pub = Join-Path $mobile "pubspec.yaml"
+            if (Test-Path $pub) {
+              "proj=$mobile" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+              Write-Host "Using mobile/: $mobile"
+              exit 0
+            }
+          }
+
+          $found = Get-ChildItem -Path $env:GITHUB_WORKSPACE -Recurse -Filter pubspec.yaml | Select-Object -First 1
+          if (-not $found) { throw "pubspec.yaml not found anywhere in repository" }
+
+          $proj = $found.Directory.FullName
+          "proj=$proj" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          Write-Host "Found Flutter project at: $proj"
 
       - name: Flutter pub get
         shell: pwsh
@@ -36,22 +47,18 @@ jobs:
           Set-Location "${{ steps.locate.outputs.proj }}"
           flutter pub get
 
+      - name: Enable Windows Desktop
+        shell: pwsh
+        run: flutter config --enable-windows-desktop
+
       - name: Build Windows Release
         shell: pwsh
         run: |
           Set-Location "${{ steps.locate.outputs.proj }}"
           flutter build windows --release
 
-        
-        run: |
-          flutter pub get
-          flutter build windows --release
-
-      -       - name: Upload Windows artifact
+      - name: Upload Windows artifact (Release folder)
         uses: actions/upload-artifact@v4
         with:
           name: windows-release
           path: '**/build/windows/x64/runner/Release/**'
-
-          name: windows-release
-          path: mobile/build/windows/x64/runner/Release/**
