@@ -21,8 +21,28 @@ jobs:
       - name: Enable Windows Desktop
         run: flutter config --enable-windows-desktop
 
+      -       - name: Locate Flutter project
+        id: locate
+        shell: pwsh
+        run: |
+          $pub = Get-ChildItem -Path $env:GITHUB_WORKSPACE -Recurse -Filter pubspec.yaml | Select-Object -First 1
+          if (-not $pub) { throw "pubspec.yaml not found in repository" }
+          "proj=$($pub.Directory.FullName)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          Write-Host "Flutter project at: $($pub.Directory.FullName)"
+
+      - name: Flutter pub get
+        shell: pwsh
+        run: |
+          Set-Location "${{ steps.locate.outputs.proj }}"
+          flutter pub get
+
       - name: Build Windows Release
-        working-directory: mobile
+        shell: pwsh
+        run: |
+          Set-Location "${{ steps.locate.outputs.proj }}"
+          flutter build windows --release
+
+        
         run: |
           flutter pub get
           flutter build windows --release
