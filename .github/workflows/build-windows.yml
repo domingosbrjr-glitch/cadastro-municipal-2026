@@ -50,15 +50,27 @@ jobs:
           Set-Location "${{ steps.locate.outputs.proj }}"
           flutter pub get
 
-      - name: Enable Windows Desktop
+      -       - name: Enable Windows Desktop
         shell: pwsh
         run: flutter config --enable-windows-desktop
+
+      - name: Ensure Windows project exists
+        shell: pwsh
+        run: |
+          Set-Location "${{ steps.locate.outputs.proj }}"
+          if (!(Test-Path "windows")) {
+            Write-Host "Windows folder not found. Creating Windows desktop scaffolding..."
+            flutter create --platforms=windows .
+          } else {
+            Write-Host "Windows folder exists."
+          }
 
       - name: Build Windows Release
         shell: pwsh
         run: |
           Set-Location "${{ steps.locate.outputs.proj }}"
           flutter build windows --release
+
 
       - name: Upload Windows artifact (Release folder)
         uses: actions/upload-artifact@v4
