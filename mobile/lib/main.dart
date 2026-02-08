@@ -1,50 +1,68 @@
 import 'package:flutter/material.dart';
-import 'auth_store.dart';
-import 'screens/login.dart';
-import 'screens/home.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-void main() {
-  runApp(const App());
+import 'screens/login_screen.dart';
+import 'screens/home_screen.dart';
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  runApp(const CadastroMunicipalApp());
 }
 
-class App extends StatefulWidget {
-  const App({super.key});
+class CadastroMunicipalApp extends StatefulWidget {
+  const CadastroMunicipalApp({super.key});
+
   @override
-  State<App> createState() => _AppState();
+  State<CadastroMunicipalApp> createState() => _CadastroMunicipalAppState();
 }
 
-class _AppState extends State<App> {
-  final AuthStore store = AuthStore();
-  bool ready = false;
-  String token = "";
+class _CadastroMunicipalAppState extends State<CadastroMunicipalApp> {
+  late Future<String> _tokenFuture;
 
   @override
   void initState() {
     super.initState();
-    _init();
+    _tokenFuture = _loadToken();
   }
 
-  Future<void> _init() async {
-    token = await store.token();
-    setState(() => ready = true);
+  Future<String> _loadToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('auth_token') ?? '';
   }
 
   @override
   Widget build(BuildContext context) {
-    if (!ready) {
-      return const MaterialApp(home: Scaffold(body: Center(child: CircularProgressIndicator())));
-    }
-    return MaterialApp(
-  title: 'Cadastro Municipal Offline',
-  theme: ThemeData(useMaterial3: true),
+    return FutureBuilder<String>(
+      future: _tokenFuture,
+      builder: (context, snapshot) {
+        final token = snapshot.data ?? '';
+        final isLogged = token.isNotEmpty;
 
-  // ✅ Evita erro de rota no Windows
-  home: token.isEmpty ? const LoginScreen() : const HomeScreen(),
+        return MaterialApp(
+          title: 'Cadastro Municipal Offline',
+          theme: ThemeData(useMaterial3: true),
 
-  // ✅ Mantém navegação por nome funcionando
-  routes: {
-    "/": (_) => token.isEmpty ? const LoginScreen() : const HomeScreen(),
-    "/login": (_) => const LoginScreen(),
-    "/home": (_) => const HomeScreen(),
-  },
-);
+          // ✅ Resolve a tela cinza: sempre existe rota inicial
+          home: isLogged ? const HomeScreen() : const LoginScreen(),
+
+          // ✅ Rotas nomeadas
+          routes: {
+            "/": (_) => isLogged ? const HomeScreen() : const LoginScreen(),
+            "/login": (_) => const LoginScreen(),
+            "/home": (_) => const HomeScreen(),
+          },
+
+          // ✅ Se alguma rota inexistente for chamada, não trava
+          onUnknownRoute: (settings) => MaterialPageRoute(
+            builder: (_) => Scaffold(
+              appBar: AppBar(title: const Text("Erro")),
+              body: Center(
+                child: Text("Rota não encontrada: ${settings.name}"),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
