@@ -1,15 +1,15 @@
-- name: Build Windows Release (verbose)
-  shell: pwsh
-  run: |
-    Set-Location "${{ steps.locate.outputs.proj }}"
-    flutter build windows --release -v
+name: Build Windows EXE
 
+on:
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: windows-latest
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Set up Flutter (stable)
         uses: subosito/flutter-action@v2
@@ -64,4 +64,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: windows-release
-          path: '**/build/windows/x64/runner/Release/**'
+          path: "**/build/windows/x64/runner/Release/**"
